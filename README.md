@@ -1,3 +1,7 @@
+
+Modification of CLASS for interacting holographic dark energy (https://arxiv.org/abs/2206.10205)
+
+
 [![](https://img.shields.io/badge/arXiv-2002.06127%20-red.svg)](https://arxiv.org/abs/2002.06127)
 
 # Modification of CLASS (v2.9) for interacting DM-DE
