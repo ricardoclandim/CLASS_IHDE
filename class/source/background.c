@@ -317,11 +317,31 @@ int background_functions(
 
     /* BEGIN MODIFICATION ML */
     if(pba->has_iDMDE == _TRUE_){
+    /* BEGIN MODIFICATION RL*/
       // From Eq. (33) of Gavela et al. 2009
+      if(pba->iDMDE_pert_type == DiValentino){
       double rho_dm0 = pba->Omega0_cdm*pow(pba->H0,2.);
       double rho_de0 = pba->Omega0_fld*pow(pba->H0,2.);
       double w_fld_eff = pba->w0_fld+pba->delta_Q/3.;
       pvecback[pba->index_bg_rho_cdm] = rho_dm0*pow(a_rel,-3.)+rho_de0*pba->delta_Q/(3.*w_fld_eff)*(1.-pow(a_rel,-3.*w_fld_eff))*pow(a_rel,-3.);
+    	}
+     else if(pba->iDMDE_pert_type == He){
+      double rho_dm0 = pba->Omega0_cdm*pow(pba->H0,2.);
+      double rho_de0 = pba->Omega0_fld*pow(pba->H0,2.);
+      double w_fld_eff = pba->w0_fld+pba->delta_Q/3.;
+      pvecback[pba->index_bg_rho_cdm] = rho_dm0*pow(a_rel,-3.)+rho_de0*pba->delta_Q/(3.*w_fld_eff)*(1.-pow(a_rel,-3.*w_fld_eff))*pow(a_rel,-3.);
+   	 } 
+     else if(pba->iDMDE_pert_type == DEDM){
+     /* From Eq. (2) of Olivares et al. 2005 Observational constraints on interacting quintessence models */
+      double rho_dm0 = pba->Omega0_cdm*pow(pba->H0,2.);
+      double rho_de0 = pba->Omega0_fld*pow(pba->H0,2.);
+      pvecback[pba->index_bg_rho_cdm] = rho_dm0*pow(a_rel,-3. +pba->lambda_cdm + pba->lambda_de*rho_de0/rho_dm0 );
+    }
+    else if(pba->iDMDE_pert_type == IntDM){
+      double rho_dm0 = pba->Omega0_cdm*pow(pba->H0,2.);
+      double w_fld_eff = -pba->delta_Q/3.;
+      pvecback[pba->index_bg_rho_cdm] = rho_dm0*pow(a_rel,-3.*(1. + w_fld_eff));
+    }
     }
     else{
       pvecback[pba->index_bg_rho_cdm] = pba->Omega0_cdm * pow(pba->H0,2) / pow(a_rel,3);
@@ -425,10 +445,31 @@ int background_functions(
 
     /* BEGIN MODIFICATION ML */
     if(pba->has_iDMDE == _TRUE_){
+      if(pba->iDMDE_pert_type == DiValentino){
       // From Eq. (33) of Gavela et al. 2009
       double rho_de0 = pba->Omega0_fld*pow(pba->H0,2.);
       double w_fld_eff = pba->w0_fld+pba->delta_Q/3.;
       pvecback[pba->index_bg_rho_fld] = rho_de0*pow(a_rel,-3.*(1.+w_fld_eff));
+    }
+      else if(pba->iDMDE_pert_type == He){
+      // From Eq. (33) of Gavela et al. 2009
+      double rho_de0 = pba->Omega0_fld*pow(pba->H0,2.);
+      double w_fld_eff = pba->w0_fld+pba->delta_Q/3.;
+      pvecback[pba->index_bg_rho_fld] = rho_de0*pow(a_rel,-3.*(1.+w_fld_eff));
+    }
+      else if(pba->iDMDE_pert_type == DEDM){
+      // From Eq. (2) of Olivares et al. 2005 Observational constraints on interacting quintessence models
+      double rho_dm0 = pba->Omega0_cdm*pow(pba->H0,2.);
+      double rho_de0 = pba->Omega0_fld*pow(pba->H0,2.);
+      pvecback[pba->index_bg_rho_fld] = rho_de0*pow(a_rel,-3. +pba->lambda_cdm + pba->lambda_de*rho_de0/rho_dm0 );
+     }
+      else if(pba->iDMDE_pert_type == IntDM){
+      double rho_dm0 = pba->Omega0_cdm*pow(pba->H0,2.);
+      double rho_de0 = pba->Omega0_fld*pow(pba->H0,2.);
+      double w_fld_eff = -pba->delta_Q/3.;
+      pvecback[pba->index_bg_rho_fld] = rho_de0*pow(a_rel,-3.*(1. + pba->w0_fld))+rho_dm0*pba->delta_Q/(3.*(pba->w0_fld - w_fld_eff))
+      				*(1.-pow(a_rel,-3.*(w_fld_eff -  pba->w0_fld)))*pow(a_rel,-3.*(1. + pba->w0_fld));
+     }
     }
     else{
       /* get rho_fld from vector of integrated variables */
@@ -436,7 +477,10 @@ int background_functions(
     }
 
     /* get w_fld from dedicated function */
-    class_call(background_w_fld(pba,a,&w_fld,&dw_over_da,&integral_fld),
+    
+    /* BEGIN MODICATION RL*/
+    class_call(background_w_fld(pba,a, pba->lambda_cdm, pba->lambda_de, pba->Omega0_fld,pba->Omega0_cdm,&w_fld,&dw_over_da,&integral_fld),
+    /* END MODIFICATION RL*/
                pba->error_message,
                pba->error_message);
     pvecback[pba->index_bg_w_fld] = w_fld;
@@ -546,9 +590,16 @@ int background_functions(
 int background_w_fld(
                      struct background * pba,
                      double a,
+                      /* BEGIN MODIFICATION RL */
+                       double lambda_cdm,
+                       double lambda_de,
+                       double Omega0_cdm,
+                       double Omega0_fld,
+                       /* END MODIFICATION RL */
                      double * w_fld,
                      double * dw_over_da_fld,
-                     double * integral_fld) {
+                     double * integral_fld)
+                     {
 
   double Omega_ede = 0.;
   double dOmega_ede_over_da = 0.;
@@ -558,7 +609,16 @@ int background_w_fld(
   /** - first, define the function w(a) */
   switch (pba->fluid_equation_of_state) {
   case CLP:
-    *w_fld = pba->w0_fld + pba->wa_fld * (1. - a / pba->a_today);
+    
+    /* BEGIN MODIFICATION RL */ 
+    /*  *w_fld = pba->w0_fld + pba->wa_fld * (1. - a / pba->a_today); */
+     if(pba->has_iDMDE == _TRUE_){ 
+     *w_fld = - (1./3.)*(pba->lambda_cdm + pba->lambda_de*pba->Omega0_fld/pba->Omega0_cdm)*(1.+pba->Omega0_cdm/pba->Omega0_fld)
+     ;}
+     else{
+      *w_fld = pba->w0_fld + pba->wa_fld * (1. - a / pba->a_today); 
+      }
+    /* END MODIFICATION  RL */ 
     break;
   case EDE:
     // Omega_ede(a) taken from eq. (10) in 1706.00730
@@ -616,7 +676,14 @@ int background_w_fld(
         fast, simple, and accurate enough. */
   switch (pba->fluid_equation_of_state) {
   case CLP:
-    *integral_fld = 3.*((1.+pba->w0_fld+pba->wa_fld)*log(pba->a_today/a) + pba->wa_fld*(a/pba->a_today-1.));
+  /* BEGIN MODIFICATION RL*/
+    /*   *integral_fld = 3.*((1.+pba->w0_fld+pba->wa_fld)*log(pba->a_today/a) + pba->wa_fld*(a/pba->a_today-1.)); */
+     if(pba->has_iDMDE == _TRUE_){ 
+    double w_ihde = -1/3*(pba->lambda_cdm+ pba->lambda_de*pba->Omega0_fld/pba->Omega0_cdm)*(1.+pba->Omega0_cdm/pba->Omega0_fld);
+    *integral_fld = 3.*((1.+w_ihde)*log(pba->a_today/a) );}
+    else{
+     *integral_fld = 3.*((1.+pba->w0_fld+pba->wa_fld)*log(pba->a_today/a) + pba->wa_fld*(a/pba->a_today-1.));
+     }
     break;
   case EDE:
     class_stop(pba->error_message,"EDE implementation not finished: to finish it, read the comments in background.c just before this line\n");
@@ -737,9 +804,10 @@ int background_init(
   /* BEGIN MODIFICATION ML */
   if (pba->has_fld == _TRUE_ && pba->has_iDMDE == _FALSE_) {
   /* END MODIFICATION ML */
-
-    class_call(background_w_fld(pba,0.,&w_fld,&dw_over_da,&integral_fld), pba->error_message, pba->error_message);
-
+  
+   /* BEGIN MODIFICATION RL */
+   class_call(background_w_fld(pba,0.,pba->lambda_cdm, pba->lambda_de,pba->Omega0_cdm, pba->Omega0_fld, &w_fld,&dw_over_da,&integral_fld), pba->error_message, pba->error_message);
+ /* END MODIFICATION RL */
     class_test(w_fld >= 1./3.,
                pba->error_message,
                "Your choice for w(a--->0)=%g is suspicious, since it is bigger than -1/3 there cannot be radiation domination at early times\n",
@@ -2103,7 +2171,10 @@ int background_initial_conditions(
     rho_fld_today = pba->Omega0_fld * pow(pba->H0,2);
 
     /* integrate rho_fld(a) from a_ini to a_0, to get rho_fld(a_ini) given rho_fld(a0) */
-    class_call(background_w_fld(pba,a,&w_fld,&dw_over_da_fld,&integral_fld), pba->error_message, pba->error_message);
+    
+    /* BEGIN MODIFICATION RL */
+    class_call(background_w_fld(pba,a,pba->lambda_cdm, pba->lambda_de,pba->Omega0_cdm, pba->Omega0_fld,&w_fld,&dw_over_da_fld,&integral_fld), pba->error_message, pba->error_message);
+    /* END MODIFICATION RL */
 
     /* Note: for complicated w_fld(a) functions with no simple
        analytic integral, this is the place were you should compute

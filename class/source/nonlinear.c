@@ -2615,7 +2615,7 @@ int nonlinear_halofit(
     /* default method to compute w0 = w_fld today, Omega_m(tau) and Omega_v=Omega_DE(tau),
        all required by HALFIT fitting formulas */
 
-    class_call(background_w_fld(pba,pba->a_today,&w0,&dw_over_da_fld,&integral_fld), pba->error_message, pnl->error_message);
+    class_call(background_w_fld(pba,pba->a_today,pba->lambda_cdm,pba->lambda_de,pba->Omega0_cdm,pba->Omega0_fld, &w0,&dw_over_da_fld,&integral_fld), pba->error_message, pnl->error_message);
 
     class_call(background_at_tau(pba,tau,pba->long_info,pba->inter_normal,&last_index,pvecback),
                pba->error_message,
@@ -3702,7 +3702,7 @@ int nonlinear_hmcode_dark_energy_correction(
                pba->error_message,
                pnl->error_message);
 
-    class_call(background_w_fld(pba,pba->a_today,&w0,&dw_over_da_fld,&integral_fld),
+    class_call(background_w_fld(pba,pba->a_today,pba->lambda_cdm,pba->lambda_de,pba->Omega0_cdm,pba->Omega0_fld, &w0,&dw_over_da_fld,&integral_fld),
                pba->error_message,
                pnl->error_message);
 
