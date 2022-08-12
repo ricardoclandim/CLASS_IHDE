@@ -1,7 +1,7 @@
 
 Modification of CLASS for interacting holographic dark energy.  The main modifications with respect to the original version are in input.c, background.c and .h, thermodynamics.c, nonlinear.c and perturbations.c (always enclosed in the comments "BEGIN/END MODIFICATION RL")
 
-[![](https://img.shields.io/badge/arXiv-2002.06127%20-red.svg)](https://arxiv.org/abs/2206.10205)
+[![](https://img.shields.io/badge/2206.10205%20-red.svg)](https://arxiv.org/abs/2206.10205)
 
 
 Based on 
