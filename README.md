@@ -1,4 +1,4 @@
-[![](https://img.shields.io/badge/2206.10205%20-red.svg)](https://arxiv.org/abs/2206.10205)
+[![arXiv](https://img.shields.io/badge/2206.10205%20-red.svg)](https://arxiv.org/abs/2206.10205)
 
 # Modification of CLASS (v2.9) for interacting Holographic dark energy
 
